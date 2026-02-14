@@ -86,7 +86,7 @@ class DataFetcher:
         logger.info(f"Fetched {len(data)} users")
         return data
 
-    def _save_raw(self, entity: str, list):
+    def _save_raw(self, entity: str, data: list):
         """Persist raw data to data lake with timestamp."""
         timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
         filename = f"{entity}_{timestamp}.json"
