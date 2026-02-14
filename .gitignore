@@ -1,4 +1,4 @@
-# Секреты
+# Environment variables
 .env
 
 # Python
@@ -10,7 +10,18 @@ __pycache__/
 env/
 venv/
 .venv/
+pip-log.txt
+pip-delete-this-directory.txt
 
-# Логи и данные
+# Logs
 logs/
+*.log
+
+# Data lake (raw data)
 data_lake/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
