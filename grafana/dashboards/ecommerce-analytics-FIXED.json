@@ -1,0 +1,320 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "PostgreSQL"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "orientation": "vertical",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT event_type, COUNT(*) as count FROM events GROUP BY event_type ORDER BY CASE event_type WHEN 'view' THEN 1 WHEN 'add_to_cart' THEN 2 WHEN 'purchase' THEN 3 END",
+          "refId": "A"
+        }
+      ],
+      "title": "Conversion Funnel",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": []
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value"
+          ]
+        },
+        "pieType": "pie",
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT category, ROUND(SUM(price * quantity)::numeric, 2) as revenue FROM events WHERE event_type IN ('add_to_cart', 'purchase') GROUP BY category ORDER BY revenue DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "Revenue by Category",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "orientation": "vertical",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/"
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT 'Total Revenue' as metric, ROUND(SUM(price * quantity)::numeric, 2) as value FROM events WHERE event_type = 'purchase' UNION ALL SELECT 'Avg Order', ROUND(AVG(price)::numeric, 2) FROM events WHERE event_type = 'purchase' UNION ALL SELECT 'Conversion %', ROUND(100.0 * COUNT(CASE WHEN event_type = 'purchase' THEN 1 END) / NULLIF(COUNT(CASE WHEN event_type = 'view' THEN 1 END), 0), 2) FROM events",
+          "refId": "A"
+        }
+      ],
+      "title": "Key Metrics",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT event_date as time, event_type, COUNT(*) as count FROM events GROUP BY event_date, event_type ORDER BY event_date",
+          "refId": "A"
+        }
+      ],
+      "title": "Events Timeline",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 5,
+      "options": {
+        "showHeader": true
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres"
+          },
+          "format": "table",
+          "rawSql": "SELECT p.title, p.category, COUNT(CASE WHEN e.event_type = 'view' THEN 1 END) as views, COUNT(CASE WHEN e.event_type = 'add_to_cart' THEN 1 END) as carts, ROUND(p.price::numeric, 2) as price, p.rating FROM products p LEFT JOIN events e ON p.product_id = e.product_id GROUP BY p.product_id, p.title, p.category, p.price, p.rating ORDER BY views DESC LIMIT 10",
+          "refId": "A"
+        }
+      ],
+      "title": "Top Products",
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [
+    "ecommerce"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "E-commerce Analytics",
+  "uid": "ecommerce-main",
+  "version": 0,
+  "weekStart": ""
+}

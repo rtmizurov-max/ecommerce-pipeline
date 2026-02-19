@@ -1,7 +1,3 @@
-"""
-Configuration module for the data pipeline.
-Handles environment variables, validation, and logging setup.
-"""
 import os
 import logging
 from pathlib import Path
@@ -12,8 +8,6 @@ load_dotenv()
 
 
 class Config:
-    """Centralized configuration management."""
-
     DATABASE_URL = os.getenv('DATABASE_URL')
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
     LOG_FILE = os.getenv('LOG_FILE', 'logs/pipeline.log')
@@ -25,13 +19,10 @@ class Config:
 
     @classmethod
     def validate(cls):
-        """Validate critical configuration parameters."""
         if not cls.DATABASE_URL:
             raise ValueError(
-                "DATABASE_URL is not set.\n"
-                "1. Register at https://supabase.com\n"
-                "2. Create project → Settings → Database → Connection string\n"
-                "3. Create .env file and paste the connection string"
+                "DATABASE_URL is not set. "
+                "Copy .env.example to .env and configure database connection."
             )
 
         parsed = urlparse(cls.DATABASE_URL)
@@ -43,7 +34,6 @@ class Config:
 
     @classmethod
     def setup_logging(cls):
-        """Configure production-ready logging."""
         logging.basicConfig(
             level=getattr(logging, cls.LOG_LEVEL),
             format='%(asctime)s | %(levelname)-8s | %(name)-15s | %(message)s',
@@ -55,7 +45,14 @@ class Config:
         )
         return logging.getLogger('pipeline')
 
+    @classmethod
+    def is_docker(cls) -> bool:
+        return os.path.exists('/.dockerenv')
+
 
 Config.validate()
 logger = Config.setup_logging()
-logger.info(f"Configuration loaded. Database host: {urlparse(Config.DATABASE_URL).hostname}")
+
+_host = urlparse(Config.DATABASE_URL).hostname
+_mode = "Docker" if Config.is_docker() else "Local"
+logger.info(f"Configuration loaded | Database: {_host} | Mode: {_mode}")

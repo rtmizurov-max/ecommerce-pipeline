@@ -1,10 +1,5 @@
-"""
-Data extraction module for e-commerce API.
-Handles API communication with retry logic and raw data persistence.
-"""
 import requests
 import json
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 from requests.adapters import HTTPAdapter
@@ -14,8 +9,6 @@ from .config import Config, logger
 
 
 class APIClient:
-    """HTTP client with retry logic and timeout handling."""
-
     def __init__(self):
         self.session = requests.Session()
         self.session.headers.update({
@@ -33,7 +26,6 @@ class APIClient:
         self.session.mount('https://', adapter)
 
     def fetch(self, endpoint: str, params: dict = None):
-        """Execute GET request to API endpoint."""
         url = f"{Config.API_BASE_URL}{endpoint}"
         logger.info(f"Fetching data from API: {url}")
 
@@ -53,17 +45,11 @@ class APIClient:
 
 
 class DataFetcher:
-    """
-    Fetches raw data from e-commerce API and persists to data lake.
-    Ensures idempotency through timestamped filenames.
-    """
-
     def __init__(self):
         self.client = APIClient()
         self.data_lake_path = Path(Config.DATA_LAKE_PATH)
 
     def fetch_products(self):
-        """Fetch product catalog from API."""
         logger.info("Fetching products...")
         data = self.client.fetch('/products')
         self._save_raw('products', data)
@@ -71,7 +57,6 @@ class DataFetcher:
         return data
 
     def fetch_carts(self):
-        """Fetch user shopping carts from API."""
         logger.info("Fetching carts...")
         data = self.client.fetch('/carts')
         self._save_raw('carts', data)
@@ -79,7 +64,6 @@ class DataFetcher:
         return data
 
     def fetch_users(self):
-        """Fetch user profiles from API."""
         logger.info("Fetching users...")
         data = self.client.fetch('/users')
         self._save_raw('users', data)
@@ -87,7 +71,6 @@ class DataFetcher:
         return data
 
     def _save_raw(self, entity: str, data: list):
-        """Persist raw data to data lake with timestamp."""
         timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
         filename = f"{entity}_{timestamp}.json"
         filepath = self.data_lake_path / filename

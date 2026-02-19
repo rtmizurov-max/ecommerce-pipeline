@@ -1,7 +1,3 @@
-"""
-Data loading module for idempotent database operations.
-Handles schema creation, conflict resolution, and index management.
-"""
 import pandas as pd
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
@@ -10,11 +6,6 @@ from .config import Config, logger
 
 
 class DataLoader:
-    """
-    Loads transformed data into PostgreSQL with idempotency guarantees.
-    Uses ON CONFLICT clauses to prevent duplicate records.
-    """
-
     def __init__(self):
         self.engine = create_engine(
             Config.DATABASE_URL,
@@ -24,14 +15,12 @@ class DataLoader:
         self._create_schema()
 
     def _create_schema(self):
-        """Create database schema with optimized indexes for analytical queries."""
         logger.info("Creating database schema...")
 
         with self.engine.connect() as conn:
-            # Products table
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS products (
-                    product_id INTEGER PRIMARY KEY,
+                    product_id BIGINT PRIMARY KEY,
                     title TEXT NOT NULL,
                     price DECIMAL(10,2) NOT NULL,
                     category TEXT NOT NULL,
@@ -41,12 +30,11 @@ class DataLoader:
                 )
             """))
 
-            # Events table (core analytical table)
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS events (
                     event_id TEXT PRIMARY KEY,
-                    user_id INTEGER NOT NULL,
-                    product_id INTEGER,
+                    user_id BIGINT NOT NULL,
+                    product_id BIGINT,
                     event_type TEXT NOT NULL,
                     quantity INTEGER NOT NULL,
                     price DECIMAL(10,2) NOT NULL,
@@ -59,7 +47,6 @@ class DataLoader:
                 )
             """))
 
-            # Indexes for analytical performance
             conn.execute(text("CREATE INDEX IF NOT EXISTS idx_events_date ON events(event_date)"))
             conn.execute(text("CREATE INDEX IF NOT EXISTS idx_events_user ON events(user_id)"))
             conn.execute(text("CREATE INDEX IF NOT EXISTS idx_events_type ON events(event_type)"))
@@ -71,18 +58,12 @@ class DataLoader:
         logger.info("Database schema created successfully")
 
     def load_products(self, df: pd.DataFrame) -> int:
-        """
-        Idempotently load products with upsert semantics.
-
-        Args:
-            df: DataFrame with product data
-
-        Returns:
-            Number of rows inserted/updated
-        """
         logger.info(f"Loading {len(df)} products into database...")
 
         try:
+            df = df.copy()
+            df['product_id'] = df['product_id'].astype('Int64')
+
             insert_query = """
                 INSERT INTO products 
                     (product_id, title, price, category, rating, rating_count, loaded_at)
@@ -109,21 +90,18 @@ class DataLoader:
             raise
 
     def load_events(self, df: pd.DataFrame) -> int:
-        """
-        Idempotently load events with skip-on-conflict semantics.
-
-        Args:
-            df: DataFrame with event data
-
-        Returns:
-            Number of new events inserted (duplicates skipped)
-        """
         logger.info(f"Loading {len(df)} events into database...")
 
         try:
-            # Prepare records with explicit loaded_at timestamp
-            df_load = df.copy()
-            df_load['loaded_at'] = pd.Timestamp.now(tz='UTC')
+            df = df.copy()
+
+            df['user_id'] = df['user_id'].astype('Int64')
+            df['product_id'] = df['product_id'].astype('Int64')
+
+            df['product_id'] = df['product_id'].where(pd.notnull(df['product_id']), None)
+            df['user_id'] = df['user_id'].where(pd.notnull(df['user_id']), None)
+
+            df['loaded_at'] = pd.Timestamp.now(tz='UTC')
 
             insert_query = """
                 INSERT INTO events 
@@ -134,7 +112,7 @@ class DataLoader:
                 ON CONFLICT (event_id) DO NOTHING
             """
 
-            records = df_load.to_dict('records')
+            records = df.to_dict('records')
             with self.engine.connect() as conn:
                 result = conn.execute(text(insert_query), records)
                 conn.commit()
