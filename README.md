@@ -25,7 +25,7 @@ Production-ready ETL пайплайн с PostgreSQL и Grafana аналитик�
 git clone https://github.com/rtmizurov-max/ecommerce-pipeline.git
 cd ecommerce-pipeline
 cp .env.example .env
-docker-compose up --build
+docker compose up --build
 ```
 
 Grafana доступна на `http://localhost:3000` (логин:admin/пароль:admin).
@@ -75,13 +75,13 @@ Grafana доступна на `http://localhost:3000` (логин:admin/паро
 
 ```bash
 # Пересборка после изменений кода
-docker-compose up --build
+docker compose up --build
 
 # Ручной запуск ETL
-docker-compose run --rm etl
+docker compose run --rm etl
 
 # Просмотр логов
-docker-compose logs -f etl
+docker compose logs -f etl
 
 # Доступ к БД
 psql postgresql://postgres:postgres@localhost:5432/ecommerce
