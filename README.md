@@ -28,7 +28,10 @@ cp .env.example .env
 docker-compose up --build
 ```
 
-Grafana доступна на `http://localhost:3000` (admin/admin)
+Grafana доступна на `http://localhost:3000` (логин:admin/пароль:admin).
+При переходе по ссылке небходимо ввести логин и пароль, затем прейти на вкладку Connections и выбрать "View configured data sources",
+там отобразится бд PostgreSQL, необходимо нажать на нее и пролистать страницу вниз,а затем нажать кнопку "Save & Test". После всех выполненных дейтсвий переходим на вкладку "Dashboards" и отркываем единственный дашборд
+,нажава на кнопку "Refresh", все виджеты обновятся, и вы увидите ключевые показатели.
 
 ## Архитектура
 
@@ -54,8 +57,8 @@ Grafana доступна на `http://localhost:3000` (admin/admin)
 
 ## Поток данных
 
-1. **Fetch** — Загрузка 20 товаров + 7 корзин из API
-2. **Transform** — Преобразование в 35 событий воронки с метаданными
+1. **Fetch** — Загрузка товаров и корзин из API
+2. **Transform** — Преобразование в  события воронки с метаданными
 3. **Load** — Запись в PostgreSQL с upsert логикой
 4. **Visualize** — Отображение метрик конверсии в Grafana
 
@@ -94,11 +97,10 @@ psql postgresql://postgres:postgres@localhost:5432/ecommerce
 
 ## Ключевые метрики
 
-- **Conversion Funnel**: View → Add to Cart → Purchase
-- **Revenue by Category**: Breakdown производительности товаров
-- **Geographic Analysis**: Топ городов по конверсии
-- **Product Rankings**: Просмотры, cart rate, выручка по товарам
-
-## Лицензия
-
-MIT
+- **Total Revenue ($)**: Общая выручка за выбранный период
+- **Total Orders**: Количество уникальных заказов (по сессиям)
+- **Conversion Rate (%)**: Доля сессий с покупкой от общего числа просмотров
+- **Average Order Value ($)**: Средний чек (выручка / количество заказов)
+- **Daily Revenue Trend**: Динамика выручки по дням
+- **Revenue by Category**: Сравнение выручки по категориям товаров
+- **Top Products by Revenue**: Рейтинг товаров по выручке, количеству покупок и просмотрам

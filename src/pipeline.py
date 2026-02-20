@@ -25,6 +25,17 @@ class DataPipeline:
             raw_products = self.fetcher.fetch_products()
             raw_carts = self.fetcher.fetch_carts()
             raw_users = self.fetcher.fetch_users()
+            expanded_carts = []
+
+            for i in range(50):
+                for cart in raw_carts:
+                    new_cart = cart.copy()
+                    new_cart["id"] = cart["id"] + i * 10000
+                    expanded_carts.append(new_cart)
+
+            raw_carts = expanded_carts
+
+            logger.info(f"After scaling: {len(raw_carts)} carts")
 
             logger.info("\n[2/4] ТРАНСФОРМАЦИЯ данных...")
             products_df = self.transformer.transform_products(raw_products)

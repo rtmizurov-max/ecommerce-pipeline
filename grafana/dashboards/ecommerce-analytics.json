@@ -1,0 +1,145 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["ecommerce", "stable"],
+  "templating": { "list": [] },
+  "time": { "from": "now-5y", "to": "now" },
+  "timezone": "browser",
+  "title": "E-Commerce Executive Dashboard",
+  "uid": "ecommerce-executive-stable",
+  "version": 1,
+  "panels": [
+
+    {
+      "type": "stat",
+      "title": "Total Revenue ($)",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "PostgreSQL" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT ROUND(SUM(price * quantity)::numeric,2) as value FROM events WHERE event_type='purchase'"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD", "decimals": 0 },
+        "overrides": []
+      }
+    },
+
+    {
+      "type": "stat",
+      "title": "Total Orders",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "PostgreSQL" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT COUNT(DISTINCT session_id) as value FROM events WHERE event_type='purchase'"
+        }
+      ]
+    },
+
+    {
+      "type": "stat",
+      "title": "Conversion Rate (%)",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "PostgreSQL" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT ROUND(100.0 * COUNT(DISTINCT CASE WHEN event_type='purchase' THEN session_id END) / NULLIF(COUNT(DISTINCT CASE WHEN event_type='view' THEN session_id END),0),2) as value FROM events"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "percent", "decimals": 2 },
+        "overrides": []
+      }
+    },
+
+    {
+      "type": "stat",
+      "title": "Average Order Value ($)",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "PostgreSQL" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT ROUND(SUM(price * quantity)/NULLIF(COUNT(DISTINCT session_id),0),2) as value FROM events WHERE event_type='purchase'"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD", "decimals": 2 },
+        "overrides": []
+      }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Revenue Over Time",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 6 },
+      "datasource": { "type": "postgres", "uid": "PostgreSQL" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawSql": "SELECT date_trunc('day', event_time) as time, SUM(price * quantity) as revenue FROM events WHERE event_type='purchase' GROUP BY 1 ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD", "decimals": 0 },
+        "overrides": []
+      }
+    },
+
+    {
+      "type": "barchart",
+      "title": "Revenue by Category",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "datasource": { "type": "postgres", "uid": "PostgreSQL" },
+      "options": {
+        "orientation": "horizontal",
+        "showValue": "always",
+        "stacking": "none"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT category AS \"Category\", ROUND(SUM(price * quantity),2) AS \"Revenue\" FROM events WHERE event_type='purchase' GROUP BY category HAVING SUM(price * quantity) > 0 ORDER BY \"Revenue\" DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD", "decimals": 0 },
+        "overrides": []
+      }
+    },
+
+    {
+      "type": "table",
+      "title": "Top Products by Revenue",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 22 },
+      "datasource": { "type": "postgres", "uid": "PostgreSQL" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT p.title as product, p.category, COUNT(*) FILTER (WHERE e.event_type='view') as views, COUNT(*) FILTER (WHERE e.event_type='purchase') as purchases, ROUND(SUM(e.price * e.quantity) FILTER (WHERE e.event_type='purchase'),2) as revenue FROM products p LEFT JOIN events e ON p.product_id = e.product_id GROUP BY p.product_id, p.title, p.category HAVING COUNT(*) FILTER (WHERE e.event_type='purchase') > 0 ORDER BY revenue DESC LIMIT 15"
+        }
+      ],
+      "options": { "showHeader": true }
+    }
+
+  ]
+}
